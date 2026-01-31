@@ -34,7 +34,7 @@
 - [x] Push notifications via gotify
 
 **Requirements**<br>
-- Debian or Ubuntu
+- Ubuntu 22.04/24.04 or Debian
 - Python 3.9 or higher
 - Kernel 5.4+ (wg kernel module, no user space support)
 
@@ -51,9 +51,9 @@ Depending on what Subnet you are using, you either have to increment the ID's by
 If 10.0.x.x/16 is used (default), a /23 is reserved per node, hence you have to increment it by 2.<br>
 ```
 #Install wg-mesh and initialize the first node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/experimental/install.sh | bash -s -- init 0 public
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/main/install.sh | bash -s -- init 0 public
 #Install wg-mesh and initialize the second node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/experimental/install.sh | bash -s -- init 2
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/main/install.sh | bash -s -- init 2
 ```
 Grab the Token from Node 0<br>
 ```
@@ -70,11 +70,11 @@ Regarding NAT or in general behind Firewalls, the "connector" is always a Client
 **Example 2+ nodes**<br>
 ```
 #Install wg-mesh and initialize the first node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/experimental/install.sh | bash -s -- init 0 public
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/main/install.sh | bash -s -- init 0 public
 #Install wg-mesh and initialize the second node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/experimental/install.sh | bash -s -- init 2
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/main/install.sh | bash -s -- init 2
 #Install wg-mesh and initialize the third node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/experimental/install.sh | bash -s -- init 4
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/main/install.sh | bash -s -- init 4
 ```
 Grab the Token from Node 0 with 
 ```
@@ -107,6 +107,17 @@ wgmesh down && bash /opt/wg-mesh/deinstall.sh
 ```
 wgmesh update && wgmesh migrate && systemctl restart wgmesh && systemctl restart wgmesh-bird
 ```
+
+**Render configs (inventory-driven)**
+```
+wgmesh render --config docs/examples/mymesh.yml
+```
+
+See the docs for topology, routing, OSPF, and Tailscale transport testing:
+- docs/topologies.md
+- docs/routing.md
+- docs/ospf.md
+- docs/tailscale-transport-testing.md
 
 **Limitations**<br>
 Connecting multiple nodes at once, without waiting for the other node to finish, will result in double links.<br>

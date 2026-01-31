@@ -3,6 +3,7 @@ from Class.wireguard import Wireguard
 from Class.templator import Templator
 from Class.base import Base
 from Class.bird import Bird
+from Class.renderer import Renderer
 import subprocess, logging, random, time, sys, os, re
 
 class CLI(Base):
@@ -319,6 +320,10 @@ class CLI(Base):
         
     def cost(self,link,cost=0):
         self.wg.setCost(link,cost)
+
+    def render(self,config_path,output_dir=None):
+        renderer = Renderer(self.path)
+        renderer.render(config_path,output_dir)
 
     def debug(self,targetLink):
         self.wg = Wireguard(self.path)

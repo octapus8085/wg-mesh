@@ -1,0 +1,66 @@
+mesh:
+  name: ir-star
+  subnet: 10.60.0.0/16
+  wg:
+    interface: wgmesh0
+    port: 51820
+    mtu: 1420
+  ospf:
+    area: 0
+    hello: 10
+    dead: 40
+
+transport:
+  mode: tailscale
+
+topology:
+  type: star
+  hubs:
+    - alpha
+    - tango
+  spokes:
+    - bravo
+    - charlie
+    - sierra
+
+nodes:
+  alpha:
+    role: hub
+    region: eu
+    wg_ip: 10.60.0.1/32
+    tailscale_ip: 100.64.0.11
+    listen_port: 51820
+    public_key: ALPHA_PUBLIC_KEY
+    private_key: ALPHA_PRIVATE_KEY
+  bravo:
+    role: spoke
+    region: ir
+    wg_ip: 10.60.0.2/32
+    tailscale_ip: 100.64.0.12
+    listen_port: 51820
+    public_key: BRAVO_PUBLIC_KEY
+    private_key: BRAVO_PRIVATE_KEY
+  charlie:
+    role: spoke
+    region: ir
+    wg_ip: 10.60.0.3/32
+    tailscale_ip: 100.64.0.13
+    listen_port: 51820
+    public_key: CHARLIE_PUBLIC_KEY
+    private_key: CHARLIE_PRIVATE_KEY
+  tango:
+    role: hub
+    region: tr
+    wg_ip: 10.60.0.4/32
+    tailscale_ip: 100.64.0.14
+    listen_port: 51820
+    public_key: TANGO_PUBLIC_KEY
+    private_key: TANGO_PRIVATE_KEY
+  sierra:
+    role: spoke
+    region: ir
+    wg_ip: 10.60.0.5/32
+    tailscale_ip: 100.64.0.15
+    listen_port: 51820
+    public_key: SIERRA_PUBLIC_KEY
+    private_key: SIERRA_PRIVATE_KEY
