@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root" ; exit 1 ; fi
-apt-get install wireguard iptables bird2 sudo python3 python3-netaddr python3-paste python3-systemd python3-bottle python3-requests python3-pip python3-yaml fping mtr-tiny vnstat git -y
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y wireguard iptables bird2 sudo python3 python3-netaddr python3-paste python3-systemd python3-bottle python3-requests python3-pip python3-yaml fping mtr-tiny vnstat git
 cd /opt/
 #git
 git clone https://github.com/octapus8085/wg-mesh.git
