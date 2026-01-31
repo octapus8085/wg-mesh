@@ -4,12 +4,12 @@
 
 For a quick test, you can make it listen public, however all data including wg keys are transmitted unencrypted!
 ```
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/experimental/install.sh | bash -s -- init 1 public
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/main/install.sh | bash -s -- init 1 public
 ```
 
 Otherwise always without public
 ```
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/experimental/install.sh | bash -s -- init 1
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/main/install.sh | bash -s -- init 1
 ```
 ## Connect / Peer
 
@@ -147,4 +147,12 @@ You can increase a link cost manually by hand
 
 ```
 wgmesh cost pipe5 5000
+```
+
+## Render (inventory-driven)
+
+Generate WireGuard + Bird2 configs from a YAML/INI inventory file.
+
+```
+wgmesh render --config docs/examples/mymesh.yml --output rendered
 ```

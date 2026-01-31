@@ -3,7 +3,7 @@
 from Class.cli import CLI
 import sys, os, re
 
-options = "init <id>, status, used, bender, migrate, recover, connect/peer <http://IP/DOMAIN:8080> <token>, tunnel, reconnect, disconnect, up, down, clean, proximity, token, disable, enable, set, cost"
+options = "init <id>, status, used, bender, migrate, recover, connect/peer <http://IP/DOMAIN:8080> <token>, tunnel, reconnect, disconnect, up, down, clean, proximity, token, disable, enable, set, cost, render --config <file> [--output <dir>]"
 #path
 path = os.path.dirname(os.path.realpath(__file__))
 cli = CLI(path)
@@ -77,6 +77,25 @@ elif sys.argv[1] == "cost":
     if len(sys.argv) <= 2: exit("link missing")
     cost = None if len(sys.argv) <= 3 else int(sys.argv[3])
     cli.cost(sys.argv[2],cost)
+elif sys.argv[1] == "render":
+    config_path, output_dir = None, None
+    args = sys.argv[2:]
+    i = 0
+    while i < len(args):
+        if args[i] in ["--config","-c"]:
+            if i + 1 >= len(args): exit("Missing value for --config")
+            config_path = args[i + 1]
+            i += 2
+            continue
+        if args[i] in ["--output","-o"]:
+            if i + 1 >= len(args): exit("Missing value for --output")
+            output_dir = args[i + 1]
+            i += 2
+            continue
+        i += 1
+    if not config_path:
+        exit("Usage: wgmesh render --config <file> [--output <dir>]")
+    cli.render(config_path, output_dir)
 elif sys.argv[1] == "debug":
     if len(sys.argv) <= 2: exit("link missing")
     cli.debug(sys.argv[2])

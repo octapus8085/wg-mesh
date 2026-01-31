@@ -26,3 +26,9 @@ rm -f /etc/machine-id && rm -f /var/lib/dbus/machine-id
 dbus-uuidgen --ensure && systemd-machine-id-setup
 reboot
 ```
+- wgmesh render fails for YAML configs<br>
+Install PyYAML (python3-yaml on Ubuntu) and re-run the render command.<br>
+- wgmesh render reports missing endpoints<br>
+Ensure each node has endpoint or tailscale_ip/transport_ip set based on transport.mode.<br>
+- wgmesh render outputs empty OSPF neighbors<br>
+Check the topology hubs/spokes lists to ensure peer relationships are defined.
