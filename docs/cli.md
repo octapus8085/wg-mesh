@@ -88,6 +88,11 @@ wgmesh set basePort 0 && systemctl restart wgmesh-bird && systemctl restart wgme
 wgmesh set basePort 5000 && systemctl restart wgmesh-bird && systemctl restart wgmesh
 ```
 
+Configure the allowed port range (example 1025–1030)
+```
+wgmesh set portRangeMin 1025 && wgmesh set portRangeMax 1030 && systemctl restart wgmesh-bird && systemctl restart wgmesh
+```
+
 Disable automatic meshing, apply this before connecting
 ```
 wgmesh disable mesh && systemctl restart wgmesh-bird

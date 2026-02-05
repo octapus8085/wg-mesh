@@ -67,7 +67,9 @@ def validateID(id):
 def validatePort(port):
     result = re.findall(r"^[0-9]{4,5}$",str(port),re.MULTILINE | re.DOTALL)
     if not result: return False
-    return True
+    portRangeMin = config.get("portRangeMin", 1025)
+    portRangeMax = config.get("portRangeMax", 1030)
+    return portRangeMin <= int(port) <= portRangeMax
 
 def validateNetwork(network):
     result = re.findall(r"^[A-Za-z]{3,6}$",network,re.MULTILINE | re.DOTALL)
@@ -210,7 +212,7 @@ def index():
     #load configs
     configs = wg.getConfigs(False)
     freeSubnet,freeSubnetv6,freePort = wg.minimal(configs,payload['basePort'])
-    if not freeSubnet or not freeSubnetv6:
+    if not freeSubnet or not freeSubnetv6 or not freePort:
         connectMutex.release()
         logging.info(f"Unable to allocate subnet for wireguard link, {requestIP}")
         return HTTPResponse(status=500, body="Unable to allocate subnet for wireguard link.")

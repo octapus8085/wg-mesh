@@ -26,6 +26,8 @@ class Wireguard(Base):
         if not "listenPort" in self.config: self.config['listenPort'] = 8080
         if not "operationMode" in self.config: self.config['operationMode'] = 0
         if not "vxlanOffset" in self.config: self.config['vxlanOffset'] = 0
+        if not "portRangeMin" in self.config: self.config['portRangeMin'] = 1025
+        if not "portRangeMax" in self.config: self.config['portRangeMax'] = 1030
         if not "subnet" in self.config: self.config['subnet'] = "10.0.0.0/16"
         if not "subnetPeer" in self.config: self.config['subnetPeer'] = "172.31.0.0/16"
         if not "subnetVXLAN" in self.config: 
@@ -100,7 +102,7 @@ class Wireguard(Base):
         print("Generating config.json")
         connectivity = {"ipv4":ipv4,"ipv6":ipv6}
         config = {"listen":listen,"listenPort":8080,"basePort":51820,"operationMode":0,"vxlanOffset":0,"subnet":"10.0.0.0/16","subnetPeer":"172.31.0.0/16",
-        "subnetVXLAN":"10.0.251.0/24","subnetLinkLocal":"fe82:","AllowedPeers":[],"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
+        "portRangeMin":1025,"portRangeMax":1030,"subnetVXLAN":"10.0.251.0/24","subnetLinkLocal":"fe82:","AllowedPeers":[],"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
         "bird":{"ospfv2":True,"ospfv3":True,"area":0,"tick":1,"client":False,"loglevel":"{ warning, fatal}","reloadInterval":600,"reloadPercentage":15},"notifications":{"enabled":False,"gotifyUp":"","gotifyDown":"","gotifyError":"","gotifyDiag":""}}
         response = self.saveJson(config,f"{self.path}/configs/config.json")
         if not response: exit("Unable to save config.json")
@@ -120,13 +122,16 @@ class Wireguard(Base):
         self.saveFile(dummyConfig,f"{self.path}/links/dummy.sh")
         self.setInterface("dummy","up")
 
-    def findLowest(self,min,list):
-        for i in range(min,min + 400):
-            if i not in list and i % 2 == 0: return i
+    def findLowest(self,minPort,usedPorts,maxPort):
+        for i in range(minPort,maxPort + 1):
+            if i not in usedPorts and i % 2 == 0: return i
 
     def minimal(self,files,port=51820):
         ports,usedSubnets,usedSubnetsv6,freeSubnet = [],[],[],""
-        if port == 0: port = random.randint(1500, 55000)
+        portRangeMin = self.config.get("portRangeMin", 1025)
+        portRangeMax = self.config.get("portRangeMax", 1030)
+        if port == 0: port = random.randint(portRangeMin, portRangeMax)
+        if port < portRangeMin: port = portRangeMin
         for file in files:
             config = self.readFile(f"{self.path}/links/{file}")
             configPort = re.findall(f"listen-port\s([0-9]+)",config, re.MULTILINE)
@@ -137,7 +142,9 @@ class Wireguard(Base):
             ports.append(int(configPort[0]))
             usedSubnets.append(configIP[0])
             usedSubnetsv6.append(configIPv6[0])
-        freePort = self.findLowest(port,ports)
+        freePort = self.findLowest(port,ports,portRangeMax)
+        if not freePort:
+            return "","",0
         try:
             #Get available subnets
             peerSubnets = self.Network.getPeerSubnets()
