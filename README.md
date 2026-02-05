@@ -14,10 +14,10 @@
 - bird2 (Routing, OSPF)
 
 **Network**<br />
-- By default 10.0.x.x/16.<br>
-- 10.0.id.1 Node /30<br>
-- 10.0.id.4-255 peers /31<br>
-- 10.0.251.1-255 vxlan /32<br>
+- By default 172.30.x.x/16.<br>
+- 172.30.id.1 Node /30<br>
+- 172.30.id.4-255 peers /31<br>
+- 172.30.251.1-255 vxlan /32<br>
 
 **Features**<br>
 - [x] automatic mesh buildup when node has joined
@@ -47,11 +47,11 @@ See the full CLI documentation in [docs/cli.md](docs/cli.md).<br>
 The ID needs to be unique, otherwise it will result in collisions.<br>
 Keep in mind, ID's 200 and higher are reserved for clients, they won't get meshed.<br>
 
-Public is used to expose the API to all interfaces, by default it listens only local on 10.0.id.1.<br>
+Public is used to expose the API to all interfaces, by default it listens only local on 172.30.id.1.<br>
 Use Public only for testing! since everything is transmitted unencrypted, otherwise use a reverse proxy with TLS.<br>
 
 Depending on what Subnet you are using, you either have to increment the ID's by 2 (10.) or by 1 (192/172.)<br>
-If 10.0.x.x/16 is used (default), a /23 is reserved per node, hence you have to increment it by 2.<br>
+If 10.0.x.x/16 is used, a /23 is reserved per node, hence you have to increment it by 2.<br>
 ```
 #Install wg-mesh and initialize the first node
 curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/master/install.sh | bash -s -- init 0 public
@@ -66,8 +66,8 @@ Connect Node 2 to Node 0
 ```
 wgmesh connect http://<node0IP>:8080 <token>
 ```
-After connecting successfully, a dummy.sh will be created, which assigns a 10.0.nodeID.0/30 to lo.<br>
-This will be picked up by bird, so on booth nodes on 10.0.0.1 and 10.0.2.1 should be reachable after bird ran.<br>
+After connecting successfully, a dummy.sh will be created, which assigns a 172.30.nodeID.0/30 to lo.<br>
+This will be picked up by bird, so on booth nodes on 172.30.0.1 and 172.30.1.1 should be reachable after bird ran.<br>
 Regarding NAT or in general behind Firewalls, the "connector" is always a Client, the endpoint the Server.<br>
 
 **Example 2+ nodes**<br>
@@ -83,12 +83,12 @@ Grab the Token from Node 0 with
 ```
 wgmesh token
 ```
-Connect Node 2 to Node 0
+Connect Node 1 to Node 0
 ```
 wgmesh connect http://<node0IP>:8080 <token>
 ```
-Before you connect the 3rd node, make sure Node 2 already has fully connected.<br>
-Connect Node 4 to Node 0
+Before you connect the 3rd node, make sure Node 1 already has fully connected.<br>
+Connect Node 2 to Node 0
 ```
 wgmesh connect http://<node0IP>:8080 <token>
 ```
@@ -99,7 +99,7 @@ birdc show route
 #and/or
 cat /opt/wg-mesh/configs/state.json
 ```
-All 3 nodes should be reachable under 10.0.nodeID.1<br>
+All 3 nodes should be reachable under 172.30.nodeID.1<br>
 
 **Removal**
 ```
