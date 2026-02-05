@@ -33,6 +33,7 @@ class Wireguard(Base):
             reconfigureDummy = True
         if not "subnetLinkLocal" in self.config: self.config['subnetLinkLocal'] = "fe82:"
         if not "AllowedPeers" in self.config: self.config['AllowedPeers'] = []
+        if not "preferIPv6" in self.config: self.config['preferIPv6'] = False
         if not "linkTypes" in self.config: self.config['linkTypes'] = ["default"]
         if not os.path.isfile("/etc/bird/static.conf"): self.cmd('touch /etc/bird/static.conf')
         if not os.path.isfile("/etc/bird/bgp.conf"): self.cmd('touch /etc/bird/bgp.conf')
@@ -100,7 +101,7 @@ class Wireguard(Base):
         print("Generating config.json")
         connectivity = {"ipv4":ipv4,"ipv6":ipv6}
         config = {"listen":listen,"listenPort":8080,"basePort":51820,"operationMode":0,"vxlanOffset":0,"subnet":"10.0.0.0/16","subnetPeer":"172.31.0.0/16",
-        "subnetVXLAN":"10.0.251.0/24","subnetLinkLocal":"fe82:","AllowedPeers":[],"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
+        "subnetVXLAN":"10.0.251.0/24","subnetLinkLocal":"fe82:","AllowedPeers":[],"preferIPv6":False,"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
         "bird":{"ospfv2":True,"ospfv3":True,"area":0,"tick":1,"client":False,"loglevel":"{ warning, fatal}","reloadInterval":600,"reloadPercentage":15},"notifications":{"enabled":False,"gotifyUp":"","gotifyDown":"","gotifyError":"","gotifyDiag":""}}
         response = self.saveJson(config,f"{self.path}/configs/config.json")
         if not response: exit("Unable to save config.json")
@@ -277,8 +278,14 @@ class Wireguard(Base):
         data = self.AskProtocol(dest,token)
         if not data: return status
         #start with the protocol which is available
-        if data['connectivity']['ipv4'] and self.config['connectivity']['ipv4']: isv6 = False
-        elif data['connectivity']['ipv6'] and self.config['connectivity']['ipv6']: isv6 = True
+        has_ipv4 = data['connectivity']['ipv4'] and self.config['connectivity']['ipv4']
+        has_ipv6 = data['connectivity']['ipv6'] and self.config['connectivity']['ipv6']
+        if has_ipv4 and has_ipv6:
+            isv6 = self.config.get('preferIPv6', False)
+        elif has_ipv4:
+            isv6 = False
+        elif has_ipv6:
+            isv6 = True
         #if neither of these are available, leave it
         else: return status
         #linkType
@@ -318,10 +325,10 @@ class Wireguard(Base):
                 print(f"Got {req.text} as response")
                 return status
             #before we try to setup a v4 in v6 wg, we check if booth hosts have IPv6 connectivity
-            if not self.config['connectivity']['ipv6'] or not data['connectivity']['ipv6']: break
-            if not self.config['connectivity']['ipv4'] or not data['connectivity']['ipv4']: break
-            #second run going to be IPv6 if available
-            isv6 = True
+            if not has_ipv6: break
+            if not has_ipv4: break
+            #second run going to be the alternate stack
+            isv6 = not isv6
         return status
 
     def updateLink(self,link,data):

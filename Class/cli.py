@@ -190,7 +190,7 @@ class CLI(Base):
         print("You should reload the services to apply any config changes")
 
     def setOption(self,options):
-        validOptions = ["area","prefix","defaultLinkType","basePort","tick","reloadInterval","reloadPercentage","operationMode","vxlanOffset","subnet","subnetVXLAN","subnetLinkLocal","AllowedPeers","gotifyUp","gotifyDown","gotifyError",'gotifyDiag']
+        validOptions = ["area","prefix","defaultLinkType","basePort","tick","reloadInterval","reloadPercentage","operationMode","vxlanOffset","subnet","subnetVXLAN","subnetLinkLocal","AllowedPeers","gotifyUp","gotifyDown","gotifyError",'gotifyDiag',"preferIPv6"]
         if len(sys.argv) == 0:
             print(f"Valid options: {', '.join(validOptions)}")
         else:
@@ -211,6 +211,8 @@ class CLI(Base):
                         config['AllowedPeers'].remove(value)
                     else:
                         config['AllowedPeers'].append(value)
+                elif key == "preferIPv6":
+                    config[key] = value.lower() in ["true","1","yes","on"]
                 else:
                     config[key] = value
                 response = self.saveJson(config,f"{self.path}/configs/config.json")
