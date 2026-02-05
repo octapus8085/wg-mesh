@@ -40,6 +40,9 @@
 
 Keep in mind that some containers such as OVZ or LXC, depending on kernel version and host configuration have issues with bird and/or wireguard.<br>
 
+**CLI usage**<br>
+See the full CLI documentation in [docs/cli.md](docs/cli.md).<br>
+
 **Example 2 nodes**<br>
 The ID needs to be unique, otherwise it will result in collisions.<br>
 Keep in mind, ID's 200 and higher are reserved for clients, they won't get meshed.<br>
@@ -51,9 +54,9 @@ Depending on what Subnet you are using, you either have to increment the ID's by
 If 10.0.x.x/16 is used, a /23 is reserved per node, hence you have to increment it by 2.<br>
 ```
 #Install wg-mesh and initialize the first node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/master/install.sh | bash -s -- init 0 public
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/master/install.sh | bash -s -- init 0 public
 #Install wg-mesh and initialize the second node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/master/install.sh | bash -s -- init 1
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/master/install.sh | bash -s -- init 2
 ```
 Grab the Token from Node 0<br>
 ```
@@ -70,11 +73,11 @@ Regarding NAT or in general behind Firewalls, the "connector" is always a Client
 **Example 2+ nodes**<br>
 ```
 #Install wg-mesh and initialize the first node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/master/install.sh | bash -s -- init 0 public
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/master/install.sh | bash -s -- init 0 public
 #Install wg-mesh and initialize the second node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/master/install.sh | bash -s -- init 1
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/master/install.sh | bash -s -- init 2
 #Install wg-mesh and initialize the third node
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/master/install.sh | bash -s -- init 2
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/master/install.sh | bash -s -- init 4
 ```
 Grab the Token from Node 0 with 
 ```
