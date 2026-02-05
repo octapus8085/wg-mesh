@@ -64,10 +64,14 @@ def validateID(id):
     if not result: return False
     return True
 
-def validatePort(port):
+def validatePort(port,port_min,port_max):
     result = re.findall(r"^[0-9]{4,5}$",str(port),re.MULTILINE | re.DOTALL)
     if not result: return False
-    return True
+    try:
+        port = int(port)
+    except ValueError:
+        return False
+    return port_min <= port <= port_max
 
 def validateNetwork(network):
     result = re.findall(r"^[A-Za-z]{3,6}$",network,re.MULTILINE | re.DOTALL)
@@ -82,6 +86,8 @@ def validateLinkType(linkType):
 def validatePrefix(prefix):
     result = re.findall(r"^[0-9.]{4,6}$",prefix,re.MULTILINE | re.DOTALL)
     if not result: return False
+    if prefix.startswith("1.0"):
+        return False
     return True
 
 def validateConnectivity(connectivity):
@@ -150,7 +156,7 @@ def index():
         logging.info(f"Invalid ID from {requestIP}")
         return HTTPResponse(status=400, body="Invalid ID")
     #validate port
-    if "port" in payload and not validatePort(payload['port']): 
+    if "port" in payload and not validatePort(payload['port'],config['portRangeMin'],config['portRangeMax']): 
         logging.info(f"Invalid Port from {requestIP}")
         return HTTPResponse(status=400, body="Invalid Port")
     #validate prefix
