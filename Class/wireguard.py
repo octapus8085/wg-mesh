@@ -28,6 +28,9 @@ class Wireguard(Base):
         if not "vxlanOffset" in self.config: self.config['vxlanOffset'] = 0
         if not "subnet" in self.config: self.config['subnet'] = "10.0.0.0/16"
         if not "subnetPeer" in self.config: self.config['subnetPeer'] = "172.31.0.0/16"
+        if not "subnetULA" in self.config:
+            self.config['subnetULA'] = "fd10::/16"
+            reconfigureDummy = True
         if not "subnetVXLAN" in self.config: 
             self.config['subnetVXLAN'] = "10.0.251.0/24"
             reconfigureDummy = True
@@ -47,6 +50,7 @@ class Wireguard(Base):
         if not "reloadPercentage" in self.config['bird']: self.config['bird']['reloadPercentage'] = 15
         if not "notifications" in self.config: self.config['notifications'] = {"enabled":False,"gotifyUp":"","gotifyDown":"","gotifyError":"","gotifyDiag":""}
         if not "gotifyDiag" in self.config['notifications']: self.config['notifications']['gotifyDiag'] = ""
+        self.validateSubnetULA(self.config)
         self.saveJson(self.config,f"{self.path}/configs/config.json")
         if reconfigureDummy: self.reconfigureDummy()
 
@@ -100,8 +104,9 @@ class Wireguard(Base):
         print("Generating config.json")
         connectivity = {"ipv4":ipv4,"ipv6":ipv6}
         config = {"listen":listen,"listenPort":8080,"basePort":51820,"operationMode":0,"vxlanOffset":0,"subnet":"10.0.0.0/16","subnetPeer":"172.31.0.0/16",
-        "subnetVXLAN":"10.0.251.0/24","subnetLinkLocal":"fe82:","AllowedPeers":[],"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
+        "subnetULA":"fd10::/16","subnetVXLAN":"10.0.251.0/24","subnetLinkLocal":"fe82:","AllowedPeers":[],"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
         "bird":{"ospfv2":True,"ospfv3":True,"area":0,"tick":1,"client":False,"loglevel":"{ warning, fatal}","reloadInterval":600,"reloadPercentage":15},"notifications":{"enabled":False,"gotifyUp":"","gotifyDown":"","gotifyError":"","gotifyDiag":""}}
+        self.validateSubnetULA(config)
         response = self.saveJson(config,f"{self.path}/configs/config.json")
         if not response: exit("Unable to save config.json")
         #load configs
@@ -119,6 +124,24 @@ class Wireguard(Base):
         dummyConfig = self.Templator.genDummy(self.config,self.config['connectivity'])
         self.saveFile(dummyConfig,f"{self.path}/links/dummy.sh")
         self.setInterface("dummy","up")
+
+    def validateSubnetULA(self,config):
+        try:
+            ulaNetwork = ipaddress.ip_network(config['subnetULA'])
+        except ValueError:
+            exit("Invalid subnetULA. Expected an IPv6 ULA prefix like fd10::/16.")
+        if ulaNetwork.version != 6:
+            exit("Invalid subnetULA. Expected an IPv6 ULA prefix like fd10::/16.")
+        if not ulaNetwork.subnet_of(ipaddress.ip_network("fc00::/7")):
+            exit("Invalid subnetULA. Prefix must be within fc00::/7 (ULA).")
+        if ulaNetwork.prefixlen != 16:
+            exit("Invalid subnetULA. Prefix must be a /16 to support VXLAN and peer allocations.")
+        peerNetwork = ipaddress.ip_network(Network(config).getNodeSubnetv6())
+        if ulaNetwork.overlaps(peerNetwork):
+            exit("Invalid subnetULA. Prefix overlaps with existing IPv6 peer range.")
+        for peerSubnet in Network(config).getPeerSubnetsv6():
+            if ulaNetwork.overlaps(peerSubnet):
+                exit("Invalid subnetULA. Prefix overlaps with existing IPv6 peer range.")
 
     def findLowest(self,min,list):
         for i in range(min,min + 400):

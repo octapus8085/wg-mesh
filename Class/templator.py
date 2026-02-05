@@ -2,6 +2,10 @@ import ipaddress, time
 
 class Templator:
 
+    def getULAPrefix(self,config):
+        ulaNetwork = ipaddress.ip_network(config['subnetULA'])
+        return ulaNetwork.network_address.exploded.split(":")[0]
+
     def genServer(self,interface,config,payload,freeSubnet,freeSubnetv6,serverPort,wgobfsSharedKey=""):
         clientPublicKey,linkType,prefix,area,connectivity = payload['clientPublicKey'],payload['linkType'],payload['prefix'],payload['area'],payload['connectivity']
         wgobfs,mtu = "",1412 if "v6" in interface else 1420
@@ -65,6 +69,7 @@ fi'''
         serverID += config['vxlanOffset']
         vxlanID = config['subnetVXLAN'].split(".")[2]
         prefix = ".".join(config['subnet'].split(".")[:2])
+        ulaPrefix = self.getULAPrefix(config)
         masquerade = ""
         if connectivity['ipv4']: masquerade += "sudo iptables -t nat -A POSTROUTING -o $(ip route show default | awk '/default/ {{print $5}}' | tail -1) -j MASQUERADE;\n"
         if connectivity['ipv6']: masquerade += "sudo ip6tables -t nat -A POSTROUTING -o $(ip -6 route show default | awk '/default/ {{print $5}}' | tail -1) -j MASQUERADE;\n"
@@ -73,16 +78,16 @@ fi'''
 if [ "$1" == "up" ];  then
     {masquerade}
     sudo ip addr add {prefix}.{serverID}.1/30 dev lo;
-    sudo ip -6 addr add fd10:0:{serverID}::1/48 dev lo;
+    sudo ip -6 addr add {ulaPrefix}:0:{serverID}::1/48 dev lo;
     sudo ip link add vxlan1 type vxlan id 1 dstport 1789 local {prefix}.{serverID}.1;
-    sudo ip -6 link add vxlan1v6 type vxlan id 2 dstport 1790 local fd10:0:{serverID}::1;
+    sudo ip -6 link add vxlan1v6 type vxlan id 2 dstport 1790 local {ulaPrefix}:0:{serverID}::1;
     sudo ip link set vxlan1 up; sudo ip -6 link set vxlan1v6 up;
     sudo ip addr add {self.getNodeVXLAN(config)} dev vxlan1;
-    sudo ip -6 addr add fd10:{vxlanID}::{serverID}/64 dev vxlan1v6;
+    sudo ip -6 addr add {ulaPrefix}:{vxlanID}::{serverID}/64 dev vxlan1v6;
 else
     {masqueradeReverse}
     sudo ip addr del {prefix}.{serverID}.1/30 dev lo;
-    sudo ip -6 addr del fd10:0:{serverID}::1/48 dev lo;
+    sudo ip -6 addr del {ulaPrefix}:0:{serverID}::1/48 dev lo;
     sudo ip link delete vxlan1; sudo ip -6 link delete vxlan1v6;
 fi'''
         return template
