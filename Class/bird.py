@@ -184,7 +184,7 @@ class Bird(Base):
             results = {}
             for target in targets:
                 targetSplit = target.split(".")
-                #reserve 10.0.200+ for clients, don't mesh
+                #reserve 172.30.200+ for clients, don't mesh
                 if int(targetSplit[2]) >= 200: continue
                 dest = target.replace(".0/30",".1")
                 #no token needed but external IP for the client

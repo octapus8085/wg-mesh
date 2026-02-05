@@ -37,7 +37,7 @@ class Wireguard(Base):
         if not "subnetPeer" in self.config: self.config['subnetPeer'] = "172.31.0.0/16"
         if not "subnetULA" in self.config: self.config['subnetULA'] = "fd10"
         if not "subnetVXLAN" in self.config: 
-            self.config['subnetVXLAN'] = "10.0.251.0/24"
+            self.config['subnetVXLAN'] = "172.30.251.0/24"
             reconfigureDummy = True
         if not "subnetLinkLocal" in self.config: self.config['subnetLinkLocal'] = "fe82:"
         if not "portRangeMin" in self.config: self.config['portRangeMin'] = 1025
@@ -417,7 +417,7 @@ class Wireguard(Base):
         for ip,latency in latencyData.items():
             if latency > float(cutoff): continue 
             targetSplit = ips[ip].split(".")
-            #reserve 10.0.200+ for clients, don't mesh
+            #reserve 172.30.200+ for clients, don't mesh
             if int(targetSplit[2]) >= 200: continue
             if ips[ip] in existing: continue
             self.connect(f"http://{ips[ip]}:{self.config['listenPort']}")
