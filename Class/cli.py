@@ -3,7 +3,7 @@ from Class.wireguard import Wireguard
 from Class.templator import Templator
 from Class.base import Base
 from Class.bird import Bird
-import subprocess, logging, time, sys, os
+import subprocess, logging, time, sys, os, ipaddress
 
 class CLI(Base):
 
@@ -190,7 +190,7 @@ class CLI(Base):
         print("You should reload the services to apply any config changes")
 
     def setOption(self,options):
-        validOptions = ["area","prefix","defaultLinkType","basePort","tick","reloadInterval","reloadPercentage","operationMode","vxlanOffset","subnet","subnetVXLAN","subnetLinkLocal","AllowedPeers","gotifyUp","gotifyDown","gotifyError",'gotifyDiag']
+        validOptions = ["area","prefix","defaultLinkType","basePort","tick","reloadInterval","reloadPercentage","operationMode","vxlanOffset","subnet","subnetVXLAN","subnetLinkLocal","subnetULA","portRangeMin","portRangeMax","preferIPv6","AllowedPeers","gotifyUp","gotifyDown","gotifyError",'gotifyDiag']
         if len(sys.argv) == 0:
             print(f"Valid options: {', '.join(validOptions)}")
         else:
@@ -200,10 +200,12 @@ class CLI(Base):
                 if not config:
                     print(f"Unable to read config.json")
                     return
-                if key == "basePort" or key == "vxlanOffset" or key == "operationMode":
+                if key == "basePort" or key == "vxlanOffset" or key == "operationMode" or key == "portRangeMin" or key == "portRangeMax":
                     config[key] = int(value)
                 elif key == "area" or key == "tick" or key == "reloadInterval" or key == "reloadPercentage":
                     config['bird'][key] = int(value)
+                elif key == "preferIPv6":
+                    config[key] = True if value.lower() == "true" else False
                 elif key == "gotifyUp" or key == "gotifyDown" or key == "gotifyError" or key == "gotifyDiag":
                     config['notifications'][key] = value
                 elif key == "AllowedPeers":
@@ -212,7 +214,27 @@ class CLI(Base):
                     else:
                         config['AllowedPeers'].append(value)
                 else:
+                    if key == "subnet":
+                        try:
+                            network = ipaddress.ip_network(value, strict=False)
+                        except ValueError:
+                            print("Invalid subnet")
+                            return
+                        if str(network.network_address) == "1.0.0.0":
+                            print("Subnet 1.0.0.0 is not allowed.")
+                            return
                     config[key] = value
+                if key in ["portRangeMin","portRangeMax"]:
+                    if config['portRangeMin'] > config['portRangeMax']:
+                        print("portRangeMin cannot be greater than portRangeMax.")
+                        return
+                    if config['basePort'] < config['portRangeMin'] or config['basePort'] > config['portRangeMax']:
+                        print("basePort must be within portRangeMin and portRangeMax.")
+                        return
+                if key == "basePort":
+                    if config['basePort'] < config['portRangeMin'] or config['basePort'] > config['portRangeMax']:
+                        print("basePort must be within portRangeMin and portRangeMax.")
+                        return
                 response = self.saveJson(config,f"{self.path}/configs/config.json")
                 if not response:
                     print("Failed to save config.json")
