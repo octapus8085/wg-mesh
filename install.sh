@@ -4,7 +4,7 @@ if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root" ; exit 1 ; fi
 apt-get install wireguard iptables bird2 sudo python3 python3-netaddr python3-paste python3-systemd python3-bottle python3-requests python3-pip fping mtr-tiny vnstat git -y
 cd /opt/
 #git
-git clone https://github.com/Ne00n/wg-mesh.git
+git clone https://github.com/octapus8085/wg-mesh.git
 cd wg-mesh
 git checkout master
 useradd wg-mesh -r -d /opt/wg-mesh -s /bin/bash

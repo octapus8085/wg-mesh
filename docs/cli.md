@@ -1,16 +1,32 @@
-# cli
+# CLI
 
-## Init
+## Install + Init
 
 For a quick test, you can make it listen public, however all data including wg keys are transmitted unencrypted!
 ```
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/experimental/install.sh | bash -s -- init 1 public
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/master/install.sh | bash -s -- init 1 public
 ```
 
 Otherwise always without public
 ```
-curl -so- https://raw.githubusercontent.com/Ne00n/wg-mesh/experimental/install.sh | bash -s -- init 1
+curl -so- https://raw.githubusercontent.com/octapus8085/wg-mesh/master/install.sh | bash -s -- init 1
 ```
+
+## Init (manual)
+
+```
+wgmesh init <id> [public|local]
+```
+
+Use `public` only for testing. The default is `local` which listens on `10.0.<id>.1`.
+
+## Status
+
+Show status information for the node.
+```
+wgmesh status
+```
+
 ## Connect / Peer
 
 Connect externally
@@ -30,6 +46,11 @@ wgmesh connect http://10.0.1.1:8080 dummy wgobfs 5555
 
 If the linkType is not available or the port is already used, it will be ignored.
 
+`peer` is the same as `connect` but forces peer mode on the link.
+```
+wgmesh peer http://10.0.1.1:8080 dummy wgobfs 5555
+```
+
 ## Disconnect
 
 To disconnect all links on a Node
@@ -45,10 +66,16 @@ wgmesh disconnect pipe250 force
 
 ## Clean
 
-Removes all dead links that don't ping<br>
+Removes all dead links that don't ping.<br>
 Be careful, you could remove links to a server that just has an outage.
 ```
 wgmesh clean
+```
+
+Ignore stored state and/or endpoint checks:
+```
+wgmesh clean ignore-json
+wgmesh clean ignore-json ignore-endpoint
 ```
 
 ## Shutdown/Startup
@@ -64,17 +91,18 @@ wgmesh up && systemctl restart wgmesh
 
 ## Enable / Disable
 
-To enable/disable settings<br>
-To view all possible commands just run enable or disable without any parameters
+To enable/disable settings.<br>
+To view all possible commands just run enable or disable without any parameters.
 
 ```
-wgmesh enable/disable ospfv3
+wgmesh enable ospfv3
+wgmesh disable mesh
 ```
 
 ## Set
 
-To set specific settings such as defaultLinkType<br>
-To view all possible commands just run set without any parameters
+To set specific settings such as defaultLinkType.<br>
+To view all possible commands just run set without any parameters.
 
 ```
 wgmesh set defaultLinkType wgobfs
@@ -139,6 +167,20 @@ wgmesh recover
 Prints out the tokens, you can also find them in logs/ or in the tokens.json file
 ```
 wgmesh token
+```
+
+## Update
+
+Pulls the latest code and updates dependencies/config as needed.
+```
+wgmesh update
+```
+
+## Geo
+
+Runs geo lookup for the node (if enabled in the CLI).
+```
+wgmesh geo
 ```
 
 ## Cost
