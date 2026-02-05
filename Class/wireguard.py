@@ -24,14 +24,32 @@ class Wireguard(Base):
         reconfigureDummy = False
         if not "defaultLinkType" in self.config: self.config['defaultLinkType'] = "default"
         if not "listenPort" in self.config: self.config['listenPort'] = 8080
+        if not "basePort" in self.config: self.config['basePort'] = 1025
         if not "operationMode" in self.config: self.config['operationMode'] = 0
         if not "vxlanOffset" in self.config: self.config['vxlanOffset'] = 0
-        if not "subnet" in self.config: self.config['subnet'] = "172.30.0.0/16"
+        if not "subnet" in self.config: self.config['subnet'] = "10.0.0.0/16"
+        try:
+            subnet = ipaddress.ip_network(self.config['subnet'], strict=False)
+            if str(subnet.network_address) == "1.0.0.0":
+                self.config['subnet'] = "10.0.0.0/16"
+        except ValueError:
+            self.config['subnet'] = "10.0.0.0/16"
         if not "subnetPeer" in self.config: self.config['subnetPeer'] = "172.31.0.0/16"
+        if not "subnetULA" in self.config: self.config['subnetULA'] = "fd10"
         if not "subnetVXLAN" in self.config: 
             self.config['subnetVXLAN'] = "172.30.251.0/24"
             reconfigureDummy = True
         if not "subnetLinkLocal" in self.config: self.config['subnetLinkLocal'] = "fe82:"
+        if not "portRangeMin" in self.config: self.config['portRangeMin'] = 1025
+        if not "portRangeMax" in self.config: self.config['portRangeMax'] = 1030
+        if not "preferIPv6" in self.config: self.config['preferIPv6'] = True
+        if self.config['portRangeMin'] > self.config['portRangeMax']:
+            self.config['portRangeMin'], self.config['portRangeMax'] = self.config['portRangeMax'], self.config['portRangeMin']
+        if "basePort" in self.config:
+            if self.config['basePort'] < self.config['portRangeMin']:
+                self.config['basePort'] = self.config['portRangeMin']
+            if self.config['basePort'] > self.config['portRangeMax']:
+                self.config['basePort'] = self.config['portRangeMax']
         if not "AllowedPeers" in self.config: self.config['AllowedPeers'] = []
         if not "linkTypes" in self.config: self.config['linkTypes'] = ["default"]
         if not os.path.isfile("/etc/bird/static.conf"): self.cmd('touch /etc/bird/static.conf')
@@ -99,8 +117,8 @@ class Wireguard(Base):
         #config
         print("Generating config.json")
         connectivity = {"ipv4":ipv4,"ipv6":ipv6}
-        config = {"listen":listen,"listenPort":8080,"basePort":51820,"operationMode":0,"vxlanOffset":0,"subnet":"172.30.0.0/16","subnetPeer":"172.31.0.0/16",
-        "subnetVXLAN":"172.30.251.0/24","subnetLinkLocal":"fe82:","AllowedPeers":[],"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
+        config = {"listen":listen,"listenPort":8080,"basePort":1025,"operationMode":0,"vxlanOffset":0,"subnet":"10.0.0.0/16","subnetPeer":"172.31.0.0/16",
+        "subnetVXLAN":"10.0.251.0/24","subnetLinkLocal":"fe82:","subnetULA":"fd10","portRangeMin":1025,"portRangeMax":1030,"preferIPv6":True,"AllowedPeers":[],"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
         "bird":{"ospfv2":True,"ospfv3":True,"area":0,"tick":1,"client":False,"loglevel":"{ warning, fatal}","reloadInterval":600,"reloadPercentage":15},"notifications":{"enabled":False,"gotifyUp":"","gotifyDown":"","gotifyError":"","gotifyDiag":""}}
         response = self.saveJson(config,f"{self.path}/configs/config.json")
         if not response: exit("Unable to save config.json")
@@ -120,13 +138,13 @@ class Wireguard(Base):
         self.saveFile(dummyConfig,f"{self.path}/links/dummy.sh")
         self.setInterface("dummy","up")
 
-    def findLowest(self,min,list):
-        for i in range(min,min + 400):
-            if i not in list and i % 2 == 0: return i
+    def findLowest(self,min_port,max_port,used_ports):
+        for i in range(min_port,max_port + 1):
+            if i not in used_ports: return i
 
     def minimal(self,files,port=51820):
         ports,usedSubnets,usedSubnetsv6,freeSubnet = [],[],[],""
-        if port == 0: port = random.randint(1500, 55000)
+        if port == 0: port = random.randint(self.config['portRangeMin'], self.config['portRangeMax'])
         for file in files:
             config = self.readFile(f"{self.path}/links/{file}")
             configPort = re.findall(f"listen-port\s([0-9]+)",config, re.MULTILINE)
@@ -137,7 +155,11 @@ class Wireguard(Base):
             ports.append(int(configPort[0]))
             usedSubnets.append(configIP[0])
             usedSubnetsv6.append(configIPv6[0])
-        freePort = self.findLowest(port,ports)
+        port_start = max(int(port), self.config['portRangeMin'])
+        port_end = self.config['portRangeMax']
+        freePort = self.findLowest(port_start,port_end,ports)
+        if freePort is None:
+            return "","",0
         try:
             #Get available subnets
             peerSubnets = self.Network.getPeerSubnets()
@@ -277,8 +299,13 @@ class Wireguard(Base):
         data = self.AskProtocol(dest,token)
         if not data: return status
         #start with the protocol which is available
-        if data['connectivity']['ipv4'] and self.config['connectivity']['ipv4']: isv6 = False
-        elif data['connectivity']['ipv6'] and self.config['connectivity']['ipv6']: isv6 = True
+        prefer_ipv6 = self.config['preferIPv6']
+        if prefer_ipv6 and data['connectivity']['ipv6'] and self.config['connectivity']['ipv6']:
+            isv6 = True
+        elif data['connectivity']['ipv4'] and self.config['connectivity']['ipv4']:
+            isv6 = False
+        elif data['connectivity']['ipv6'] and self.config['connectivity']['ipv6']:
+            isv6 = True
         #if neither of these are available, leave it
         else: return status
         #linkType
