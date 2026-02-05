@@ -26,10 +26,10 @@ class Wireguard(Base):
         if not "listenPort" in self.config: self.config['listenPort'] = 8080
         if not "operationMode" in self.config: self.config['operationMode'] = 0
         if not "vxlanOffset" in self.config: self.config['vxlanOffset'] = 0
-        if not "subnet" in self.config: self.config['subnet'] = "10.0.0.0/16"
+        if not "subnet" in self.config: self.config['subnet'] = "172.30.0.0/16"
         if not "subnetPeer" in self.config: self.config['subnetPeer'] = "172.31.0.0/16"
         if not "subnetVXLAN" in self.config: 
-            self.config['subnetVXLAN'] = "10.0.251.0/24"
+            self.config['subnetVXLAN'] = "172.30.251.0/24"
             reconfigureDummy = True
         if not "subnetLinkLocal" in self.config: self.config['subnetLinkLocal'] = "fe82:"
         if not "AllowedPeers" in self.config: self.config['AllowedPeers'] = []
@@ -99,8 +99,8 @@ class Wireguard(Base):
         #config
         print("Generating config.json")
         connectivity = {"ipv4":ipv4,"ipv6":ipv6}
-        config = {"listen":listen,"listenPort":8080,"basePort":51820,"operationMode":0,"vxlanOffset":0,"subnet":"10.0.0.0/16","subnetPeer":"172.31.0.0/16",
-        "subnetVXLAN":"10.0.251.0/24","subnetLinkLocal":"fe82:","AllowedPeers":[],"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
+        config = {"listen":listen,"listenPort":8080,"basePort":51820,"operationMode":0,"vxlanOffset":0,"subnet":"172.30.0.0/16","subnetPeer":"172.31.0.0/16",
+        "subnetVXLAN":"172.30.251.0/24","subnetLinkLocal":"fe82:","AllowedPeers":[],"prefix":"pipe","id":int(id),"linkTypes":["default"],"defaultLinkType":"default","connectivity":connectivity,
         "bird":{"ospfv2":True,"ospfv3":True,"area":0,"tick":1,"client":False,"loglevel":"{ warning, fatal}","reloadInterval":600,"reloadPercentage":15},"notifications":{"enabled":False,"gotifyUp":"","gotifyDown":"","gotifyError":"","gotifyDiag":""}}
         response = self.saveJson(config,f"{self.path}/configs/config.json")
         if not response: exit("Unable to save config.json")
@@ -390,7 +390,7 @@ class Wireguard(Base):
         for ip,latency in latencyData.items():
             if latency > float(cutoff): continue 
             targetSplit = ips[ip].split(".")
-            #reserve 10.0.200+ for clients, don't mesh
+            #reserve 172.30.200+ for clients, don't mesh
             if int(targetSplit[2]) >= 200: continue
             if ips[ip] in existing: continue
             self.connect(f"http://{ips[ip]}:{self.config['listenPort']}")

@@ -28,7 +28,7 @@ else
 fi'''
         return template
 
-    def genClient(self,interface,config,resp,serverIPExternal,linkType="default",prefix="10.0",peerPrefix="172.31"):
+    def genClient(self,interface,config,resp,serverIPExternal,linkType="default",prefix="172.30",peerPrefix="172.31"):
         serverID,freeSubnet,freeSubnetv6,serverPort,serverPublicKey,wgobfsSharedKey = resp['id'],resp['freeSubnet'],resp['freeSubnetv6'],resp['freePort'],resp['publicKeyServer'],resp['wgobfsSharedKey']
         wgobfs,mtu = "",1412 if "v6" in interface else 1420
         wgPrefix = "awg" if linkType == "amneziawg" else "wg"

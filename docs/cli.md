@@ -20,12 +20,12 @@ wgmesh connect https://mahdomain.net:443 mahtoken
 
 Connect internally
 ```
-wgmesh connect http://10.0.1.1:8080
+wgmesh connect http://172.30.1.1:8080
 ```
 
 Connect with specific preferences (linkType , port)
 ```
-wgmesh connect http://10.0.1.1:8080 dummy wgobfs 5555
+wgmesh connect http://172.30.1.1:8080 dummy wgobfs 5555
 ```
 
 If the linkType is not available or the port is already used, it will be ignored.

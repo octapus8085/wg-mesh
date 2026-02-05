@@ -6,8 +6,8 @@ B = Base()
 
 ids = {}
 for i in range(0,200):
-    print(f"10.0.{i}.1","Checking machine-ID")
-    resp = B.cmd(f"ssh root@10.0.{i}.1 cat /etc/machine-id",3)
+    print(f"172.30.{i}.1","Checking machine-ID")
+    resp = B.cmd(f"ssh root@172.30.{i}.1 cat /etc/machine-id",3)
     if resp[0] == "": continue
     print(f"Got {resp[0].rstrip()}")
     ids[i] = resp[0]
