@@ -131,7 +131,8 @@ class Wireguard(Base):
         portRangeMin = self.config.get("portRangeMin", 1025)
         portRangeMax = self.config.get("portRangeMax", 1030)
         if port == 0: port = random.randint(portRangeMin, portRangeMax)
-        if port < portRangeMin: port = portRangeMin
+        if port < portRangeMin or port > portRangeMax:
+            port = portRangeMin
         for file in files:
             config = self.readFile(f"{self.path}/links/{file}")
             configPort = re.findall(f"listen-port\s([0-9]+)",config, re.MULTILINE)
